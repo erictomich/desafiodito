@@ -19,7 +19,7 @@
         <div class="app_container">
             <div class="timeline">
 
-                <div class="timeline-item" v-for="compra in timeline">
+                <div class="timeline-item" v-for="compra in timeline" :key="compra.transaction_id">
                     <div class="timeline-marker is-icon check-icon">
                     </div>
                     <div class="timeline-content">
