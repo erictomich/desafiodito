@@ -74,7 +74,8 @@
     new Vue({
       el: '#app',
       data: {
-        events: null
+        events: null,
+        endpoint: 'https://storage.googleapis.com/dito-questions/events.json'
       },
       mounted: function () {
         /* O método getEvents() atribui os eventos do endpoint à propriedade "events"
@@ -96,7 +97,7 @@
       methods: {
             getEvents() {
                 var vm = this;
-                axios.get('https://storage.googleapis.com/dito-questions/events.json')
+                axios.get(vm.endpoint)
                 .then(function (response) {
                     vm.events = response.data.events;
                 }, function (error) {
