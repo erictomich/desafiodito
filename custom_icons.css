@@ -1,19 +1,19 @@
 /* ICONES */
 
 .check-icon {
-    background: url("http://localhost:8000/parte3_sintese/images/icons/check.svg") no-repeat center center !important;
+    background: url("./images/icons/check.svg") no-repeat center center !important;
 }
 .calendar-icon {
-    background: url("http://localhost:8000/parte3_sintese/images/icons/calendar.svg") no-repeat center center !important;
+    background: url("./images/icons/calendar.svg") no-repeat center center !important;
 }
 .clock-icon {
-    background: url("http://localhost:8000/parte3_sintese/images/icons/clock.svg") no-repeat center center !important;
+    background: url("./images/icons/clock.svg") no-repeat center center !important;
 }
 .place-icon {
-    background: url("http://localhost:8000/parte3_sintese/images/icons/place.svg") no-repeat center center !important;
+    background: url("./images/icons/place.svg") no-repeat center center !important;
 }
 .money-icon {
-    background: url("http://localhost:8000/parte3_sintese/images/icons/money.svg") no-repeat center center !important;
+    background: url("./images/icons/money.svg") no-repeat center center !important;
 }
 
 
