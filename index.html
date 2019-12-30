@@ -4,6 +4,7 @@
     <meta name="robots" content="noindex">
 
     <link rel="stylesheet" href="http://localhost:8000/parte3_sintese/custom.css">
+    <link rel="stylesheet" href="http://localhost:8000/parte3_sintese/custom_icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-extensions@6.2.7/bulma-timeline/dist/css/bulma-timeline.min.css">    
     
@@ -15,7 +16,7 @@
         <div class="app_container">
             <div class="timeline">
 
-                <div class="timeline-item" v-for="item in compras">
+                <div class="timeline-item" v-for="compra in timeline">
                     <div class="timeline-marker is-icon check-icon">
                     </div>
                     <div class="timeline-content">
@@ -23,30 +24,34 @@
                             <div class="timeline-content-container-heading">
                                     <div class="heading-date">
                                         <i class="icones calendar-icon icones-a"></i>
-                                        {{ item.date }}
+                                        {{ compra.date }}
                                     </div>
                                     <div class="heading-hour">
                                         <i class="icones clock-icon icones-a"></i>
-                                        {{ item.hour }}
+                                        {{ compra.hour }}
                                     </div>
                                     <div class="heading-where">
                                         <i class="icones place-icon icones-b"></i>
-                                        {{ item.store_name }}
+                                        {{ compra.store_name }}
                                     </div>
                                     <div class="heading-price">
                                         <i class="icones money-icon icones-c"></i>
-                                        {{ item.revenue | moneyFormat }}
+                                        {{ compra.revenue | moneyFormat }}
                                     </div>
                             </div> <!-- /.timeline-content-container-heading -->
                             <div class="timeline-content-container-body">
-                                <table>
+                                <table class="table_produtos" style="table-layout: fixed; width: 365px">
+                                    <colgroup>
+                                        <col style="width: 250px">
+                                        <col style="width: 50px">
+                                        </colgroup>
                                     <tr class="linha linha1">
-                                      <th>Produto</th>
-                                      <th>Preço</th>
+                                      <th class="coluna">Produto</th>
+                                      <th class="coluna coluna_preco">Preço</th>
                                     </tr>
-                                    <tr v-for="produto in item.produtos" class="linha">
-                                      <td>{{ produto.product_name }}</td>
-                                      <td>{{ produto.product_price | moneyFormat }}</td>
+                                    <tr v-for="produto in compra.produtos" class="linha">
+                                      <td class="coluna">{{ produto.product_name }}</td>
+                                      <td class="coluna coluna_preco">{{ produto.product_price | moneyFormat }}</td>
                                     </tr>
                                   </table>
                                
@@ -71,9 +76,26 @@
       el: '#app',
       data: {
         events: null
+      },
+      mounted: function () {
+        /* O método getEvents() atribui os eventos do endpoint à propriedade "events"
+        * que ficará sendo ouvida pela dado computado "timeline"  
+        * de modo que qualquer alteração na propriedade "events"
+        * modifique automaticamente a timeline, de modo reativo
+        */
+
+        this.getEvents();
       },    
+      computed: {
+        timeline() {
+            let events_comprou = this.filterComprouEvents(this.events);
+            let timeline = this.createTimeline(events_comprou);
+            timeline = this.orderByTimestampDesc(timeline);
+            return timeline;
+        }
+      },
       methods: {
-            getEvents: function () {
+            getEvents() {
                 var vm = this;
                 axios.get('https://storage.googleapis.com/dito-questions/events.json')
                 .then(function (response) {
@@ -82,11 +104,33 @@
                     console.log(error.statusText);
                 });
             },
-            getProdutos(comprou) {
+            createTimeline(events_comprou) {
                 var vm = this;
-                let produtos = _.filter(this.events, function(obj) {
+                events_comprou = _.forEach(events_comprou, function(comprou) {
+                    comprou.transaction_id = vm.getCustomData(comprou, 'transaction_id');
+                    comprou.store_name = vm.getCustomData(comprou, 'store_name');
+                    comprou.date = vm.getEventDate(comprou.timestamp);
+                    comprou.hour = vm.getEventHour(comprou.timestamp);
+                    comprou.produtos = vm.getProdutos(comprou);
+                });
+                return events_comprou;
+            },
+            getProdutos(event) {
+                let produtos = this.getProdutosGroupByTransactionId(event.transaction_id);
+                produtos = this.orderByTimestampDesc(produtos);
+                return produtos;
+            },
+            getProdutosGroupByTransactionId(transaction_id) {
+                /*
+                * Filtra a propriedade "events" para pegar
+                * somente os eventos com a propriedade "transaction_id" iguais
+                * e considerando apenas o eventos do tipo "comprou-produto"
+                */
+
+                var vm = this;
+                return _.filter(this.events, function(obj) {
                     let objTransactionId = vm.getCustomData(obj, 'transaction_id');
-                    if(comprou.transaction_id == objTransactionId) {
+                    if(objTransactionId == transaction_id) {
                         if(obj.event == "comprou-produto") {
                             obj.product_name = vm.getCustomData(obj, 'product_name');
                             obj.product_price = vm.getCustomData(obj, 'product_price');
@@ -94,11 +138,16 @@
                         }
                     }         
                 });
-                return _.orderBy(produtos, ['timestamp'], 'desc');
             },
             getCustomData(obj, key) {
                 let index = _.findIndex(obj.custom_data, ['key', key]);
                 return obj.custom_data[index].value;
+            },
+            filterComprouEvents(events) {
+                return _.filter(events, { "event": "comprou" });
+            },
+            orderByTimestampDesc(obj) {
+                return _.orderBy(obj, ['timestamp'], 'desc'); 
             },
             getEventDate: function(timestamp) {
                 let year = timestamp.substr(0, 4);
@@ -110,28 +159,10 @@
                 return timestamp.substr(11, 5);
             } 
         },
-      computed: {
-        compras() {
-            var vm = this;
-            var events = _.filter(this.events, { "event": "comprou" });
-            events = _.forEach(events, function(comprou) {
-                comprou.transaction_id = vm.getCustomData(comprou, 'transaction_id');
-                comprou.store_name = vm.getCustomData(comprou, 'store_name');
-                comprou.date = vm.getEventDate(comprou.timestamp);
-                comprou.hour = vm.getEventHour(comprou.timestamp);
-                comprou.produtos = vm.getProdutos(comprou);
-            });
-
-            return _.orderBy(events, ['timestamp'], 'desc'); 
-        }
-      },
       filters: {
         moneyFormat: function (value) {
             return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
-      },
-      mounted: function () {
-        this.getEvents();
       }
 
     });

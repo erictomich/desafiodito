@@ -1,0 +1,37 @@
+/* ICONES */
+
+.check-icon {
+    background: url("http://localhost:8000/parte3_sintese/images/icons/check.svg") no-repeat center center !important;
+}
+.calendar-icon {
+    background: url("http://localhost:8000/parte3_sintese/images/icons/calendar.svg") no-repeat center center !important;
+}
+.clock-icon {
+    background: url("http://localhost:8000/parte3_sintese/images/icons/clock.svg") no-repeat center center !important;
+}
+.place-icon {
+    background: url("http://localhost:8000/parte3_sintese/images/icons/place.svg") no-repeat center center !important;
+}
+.money-icon {
+    background: url("http://localhost:8000/parte3_sintese/images/icons/money.svg") no-repeat center center !important;
+}
+
+
+.check-icon, .calendar-icon, .clock-icon, .place-icon, .money-icon {
+    background-size: cover !important;
+}
+.icones-a {
+    width: 12px; max-width: 12px;
+    height: 12px; max-height: 12px;
+}
+.icones-b {
+    width: 12px; max-width: 12px;
+    height: 15px; max-height: 15px;
+}
+.icones-c {
+    width: 12px; max-width: 12px;
+    height: 14px; max-height: 14px;
+}
+.icones {
+    margin-right: 4px;
+}
