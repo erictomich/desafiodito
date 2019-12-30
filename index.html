@@ -1,0 +1,142 @@
+<html class="" lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex">
+
+    <link rel="stylesheet" href="http://localhost:8000/parte3_sintese/custom.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-extensions@6.2.7/bulma-timeline/dist/css/bulma-timeline.min.css">    
+    
+
+  </head>
+  <body>
+
+    <div id="app">
+        <div class="app_container">
+            <div class="timeline">
+
+                <div class="timeline-item" v-for="item in compras">
+                    <div class="timeline-marker is-icon check-icon">
+                    </div>
+                    <div class="timeline-content">
+                        <div class="timeline-content-container triangle">
+                            <div class="timeline-content-container-heading">
+                                    <div class="heading-date">
+                                        <i class="icones calendar-icon icones-a"></i>
+                                        {{ item.date }}
+                                    </div>
+                                    <div class="heading-hour">
+                                        <i class="icones clock-icon icones-a"></i>
+                                        {{ item.hour }}
+                                    </div>
+                                    <div class="heading-where">
+                                        <i class="icones place-icon icones-b"></i>
+                                        {{ item.store_name }}
+                                    </div>
+                                    <div class="heading-price">
+                                        <i class="icones money-icon icones-c"></i>
+                                        {{ item.revenue | moneyFormat }}
+                                    </div>
+                            </div> <!-- /.timeline-content-container-heading -->
+                            <div class="timeline-content-container-body">
+                                <table>
+                                    <tr class="linha linha1">
+                                      <th>Produto</th>
+                                      <th>Preço</th>
+                                    </tr>
+                                    <tr v-for="produto in item.produtos" class="linha">
+                                      <td>{{ produto.product_name }}</td>
+                                      <td>{{ produto.product_price | moneyFormat }}</td>
+                                    </tr>
+                                  </table>
+                               
+                               
+                            </div> <!-- /.timeline-content-container-body -->
+                        </div> <!-- /.timeline-content-container -->
+                    </div> <!-- /.timeline-content -->
+                </div> <!-- /.timeline-item -->
+        
+            </div> <!-- /.timeline -->
+        </div> <!-- /.app_container -->
+
+    </div> <!-- /#app -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.15.3/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.2.4/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.15/lodash.min.js"></script>
+
+    <script>
+
+    new Vue({
+      el: '#app',
+      data: {
+        events: null
+      },    
+      methods: {
+            getEvents: function () {
+                var vm = this;
+                axios.get('https://storage.googleapis.com/dito-questions/events.json')
+                .then(function (response) {
+                    vm.events = response.data.events;
+                }, function (error) {
+                    console.log(error.statusText);
+                });
+            },
+            getProdutos(comprou) {
+                var vm = this;
+                let produtos = _.filter(this.events, function(obj) {
+                    let objTransactionId = vm.getCustomData(obj, 'transaction_id');
+                    if(comprou.transaction_id == objTransactionId) {
+                        if(obj.event == "comprou-produto") {
+                            obj.product_name = vm.getCustomData(obj, 'product_name');
+                            obj.product_price = vm.getCustomData(obj, 'product_price');
+                            return obj;
+                        }
+                    }         
+                });
+                return _.orderBy(produtos, ['timestamp'], 'desc');
+            },
+            getCustomData(obj, key) {
+                let index = _.findIndex(obj.custom_data, ['key', key]);
+                return obj.custom_data[index].value;
+            },
+            getEventDate: function(timestamp) {
+                let year = timestamp.substr(0, 4);
+                let month = timestamp.substr(5, 2);
+                let day = timestamp.substr(8, 2);
+                return day+"/"+month+"/"+year;                
+            },
+            getEventHour: function(timestamp) {
+                return timestamp.substr(11, 5);
+            } 
+        },
+      computed: {
+        compras() {
+            var vm = this;
+            var events = _.filter(this.events, { "event": "comprou" });
+            events = _.forEach(events, function(comprou) {
+                comprou.transaction_id = vm.getCustomData(comprou, 'transaction_id');
+                comprou.store_name = vm.getCustomData(comprou, 'store_name');
+                comprou.date = vm.getEventDate(comprou.timestamp);
+                comprou.hour = vm.getEventHour(comprou.timestamp);
+                comprou.produtos = vm.getProdutos(comprou);
+            });
+
+            return _.orderBy(events, ['timestamp'], 'desc'); 
+        }
+      },
+      filters: {
+        moneyFormat: function (value) {
+            return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+      },
+      mounted: function () {
+        this.getEvents();
+      }
+
+    });
+
+    </script>
+    
+  </body>
+</html>
